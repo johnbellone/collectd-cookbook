@@ -9,30 +9,43 @@ require 'poise'
 
 module CollectdCookbook
   module Resource
-    # A resource which manages collectd daemon configurations.
-    # @since 1.0.0
+    # A `collectd_config` resource which manages a collectd
+    # configuration file.
+    # @action create
+    # @action remove
+    # @provides collectd_config
+    # @since 2.0
     # @example
-    # collectd_config '/etc/collectd.conf' do
-    #   configuration('read_threads' => 5,
-    #     'write_threads' => 5,
-    #     'interval' => 10
-    #   )
-    # end
+    #   collectd_config '/etc/collectd.conf' do
+    #     options('read_threads' => 5,
+    #       'write_threads' => 5,
+    #       'interval' => 10
+    #     )
+    #   end
     class CollectdConfig < Chef::Resource
       include Poise(fused: true)
       provides(:collectd_config)
 
+      # @!attribute path
+      # @return [String]
       attribute(:path, kind_of: String, name_attribute: true)
+      # @!attribute owner
+      # @return [String]
       attribute(:owner, kind_of: String, default: 'collectd')
+      # @!attribute group
+      # @return [String]
       attribute(:group, kind_of: String, default: 'collectd')
+      # @!attribute mode
+      # @return [String]
       attribute(:mode, kind_of: String, default: '0644')
+      # @!attribute options
+      # @return [Hash]
+      attribute(:options, option_collector: true)
 
-      attribute(:configuration, option_collector: true)
-
-      # Produces collectd {configuration} elements from resource.
+      # Produces collectd {options} elements from resource.
       # @return [String]
       def content
-        write_elements(configuration).concat("\n")
+        write_elements(options).concat("\n")
       end
 
       # Converts from snake case to a camel case string.
@@ -90,7 +103,7 @@ module CollectdCookbook
         end
       end
 
-      action(:delete) do
+      action(:remove) do
         notifying_block do
           file new_resource.path do
             action :delete
